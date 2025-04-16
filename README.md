@@ -543,3 +543,83 @@ This opens the crontab configuration file in your default text editor.
 ```
 - 0 3 * * *: This means every day at 3:00 AM.
 - `/path/to/load_population_data.sh`: This is the path to your data ingestion script.
+
+## 1. YARN ResourceManager Web UI
+URL: http://192.168.1.40:8088/cluster/nodes
+Purpose:
+- Monitors cluster resources and running applications
+- Shows live node status and resource utilization
+- Check memory usage per node in the UI
+ 
+## Key Features
+
+| Section           | What It Shows                          | Importance                     |
+|-------------------|----------------------------------------|-------------------------------|
+| Cluster Metrics   | Total memory/CPU across nodes          | Verify resource capacity       |
+| Nodes             | List of active NodeManagers            | Check if all nodes are alive  |
+| Applications      | Running/finished MapReduce/Spark jobs  | Debug failed jobs              |
+| Scheduler         | Resource allocation queues             | Optimize job scheduling        |
+
+## 2. HDFS NameNode Web UI
+URL: http://192.168.1.40:9870/dfshealth.html#tab-datanode
+__Purpose:__
+- Monitors HDFS storage health and DataNode status
+- Provides filesystem browsing capabilities
+
+## Key Sections
+
+##  Key Sections
+
+| Tab        | Information Provided         | Critical Checks                 |
+|------------|------------------------------|----------------------------------|
+| Overview   | Total capacity/used space    | Detect storage shortages         |
+| Datanodes  | Live/Dead DataNodes list     | Ensure all nodes are reporting   |
+| Snapshot   | Filesystem snapshots         | Verify backup status             |
+| Utilities  | Browse HDFS filesystem       | Check ingested data files        |
+
+## Key challenges faced during this Hadoop/Hive data pipeline project and how they were resolved:
+### 1. CSV Download Challenges
+- Issue: Census.gov blocking wget requests
+- Workaround: Added headers mimicking browser requests
+```bash
+wget --header="User-Agent: Mozilla/5.0" --referer="https://www.census.gov/" $URL
+```
+
+### 2. HDFS Connectivity Issues
+- Symptoms: Filesystem closed errors during HDFS uploads
+- Root Cause: Hadoop services (NameNode/DataNode) not running or misconfigured
+- Solution
+```bash
+# Verify services
+jps
+# Restart if needed
+stop-all.sh
+start-all.sh
+```
+### 3.Hive Database/Table Errors
+- Error: FAILED: SemanticException [Error 10072]: Database does not exist
+- Fix: Added explicit database creation/verification in script
+```bash
+hive -e "CREATE DATABASE IF NOT EXISTS project_data;"
+```
+### 4. Memory Constraints
+- Issue: VM hanging due to low RAM (3.8GB total with Hadoop/Hive)
+- Mitigation:
+   - Optimized script with resource monitoring
+
+### 5. Path/Permission Problems
+- Errors: File not found or permission denied
+- Prevention:
+```bash
+# Verify paths
+hadoop fs -ls /user/project
+# Set permissions
+hdfs dfs -chmod -R 755 /user/project
+```
+### 6.Timeout Handling
+- Issue: Hive queries timing out
+- Fix: Added timeout parameters
+```bash
+timeout 30s hive -e "QUERY"
+```
+
