@@ -19,11 +19,33 @@ A complete pipeline to fetch census data, store in HDFS, and analyze using Hive 
 # Download Ubuntu 20.04 LTS
 wget https://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso
 
-# VMware Player Configuration:
+# VMware Workstation Download & Setup
+Download Links
+[Download for Windows](https://www.vmware.com/go/getplayer-win)
+
+Installation Guide
+Windows
+```powershell
+# Run installer as Administrator
+VMware-player-16.x.x-xxxxxx.exe /s /v"/qn"
+```
 - Minimum: 4 CPU cores, 8GB RAM, 50GB disk
 - Network: Bridged adapter recommended
 
-### Software Requirements
+## **Virtual Machine Specifications**
+
+| Category               | Setting                  | Recommended Value              | Notes                                                                 |
+|------------------------|--------------------------|---------------------------------|-----------------------------------------------------------------------|
+| **Hardware**           | vCPUs                    | 4 cores                        | Allocate ≥2 cores for Hadoop services                                 |
+|                        | RAM                      | 8 GB (Minimum)                 | 16 GB recommended for production                                     |
+|                        | Disk Space               | 50 GB (Thin Provisioned)       | SSD preferred for better I/O performance                             |
+| **Software**           | VMware Version           | Workstation 16.x / Player 16.x | [Download Link](https://www.vmware.com/go/getplayer-win)             |
+|                        | Guest OS                 | Ubuntu 20.04 LTS               | Server/Desktop edition both supported                                |
+| **Network**            | Adapter Type             | Bridged                        | NAT may cause connection issues with cluster services                |
+|                        | MAC Address              | Auto-generated                 | Change if cloning VMs                                                |
+
+
+## Software Requirements
 
 # Essential packages
 sudo apt update && sudo apt install -y \
@@ -131,6 +153,39 @@ Update it as:
   </property>
 </configuration>
 ```
+## 3. mapred-site.xml
+Location: `$HADOOP_HOME/etc/hadoop/mapred-site.xml`
+Edit and add
+```xml
+<configuration>
+  <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+  </property>
+</configuration>
+```
+## 4. yarn-site.xml
+Location: `$HADOOP_HOME/etc/hadoop/yarn-site.xml`
+Update it with:
+```xml
+<configuration>
+  <property>
+    <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+  </property>
+</configuration>
+```
+## 5. Hive Metastore Configuration
+```xml
+<property>
+  <name>hive.metastore.warehouse.dir</name>
+  <value>/user/hive/warehouse</value>
+</property>
+<property>
+  <name>hive.exec.scratch.dir</name>
+  <value>/tmp/hive</value>
+</property>
+```
 ## Stage 1: Start Hadoop Services
 Starts the Hadoop Distributed File System (HDFS) daemons:
 * __NameNode__ (manages metadata and file system namespace)
@@ -222,3 +277,5 @@ hive -e "CREATE TABLE census_data (...); SELECT COUNT(*) FROM census_data;"
 | **Hive Metastore** | `netstat -tulnp \| grep 9083`         | `tcp 0 0 0.0.0.0:9083 0.0.0.0:* LISTEN`          |
 | **HiveServer2** | `beeline -u jdbc:hive2://localhost:10000 -e "SHOW DATABASES;"` | Lists `census` database                          |
 | **MySQL**       | `mysql -u hiveuser -p -e "USE metastore; SHOW TABLES;"` | Shows `TBLS`, `DBS` etc.                         |
+
+
