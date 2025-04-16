@@ -1,11 +1,7 @@
 # Dynamic Data Ingestion and Storage in HDFS with Automated Hive Integration
 
-## Project Overview
-A complete pipeline to fetch census data, store in HDFS, and analyze using Hive with full automation capabilities.
-
 ## Problem statement
-The goal of this project is to **fetch population data from a specified public dataset URL**, store it in **HDFS**, and create a corresponding **Hive table** to query and visualize the data.  
-The project emphasizes the complete flow from downloading structured data to **automated ingestion and validation** using a script.  
+The goal of this project is to **fetch population data from a specified public dataset URL**, store it in **HDFS**, and create a corresponding **Hive table** to query and visualize the data.The project emphasizes the complete flow from downloading structured data to **automated ingestion and validation** using a script.  
 
 Steps include:
 - Ensuring data availability and retrieval success.
@@ -62,10 +58,12 @@ Steps include:
 
 ### 1. Setting Up Ubuntu VM
 
-# Download Ubuntu 20.04 LTS
+#### Download Ubuntu 20.04 LTS
+```bash
 wget https://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso
+```
 
-# VMware Workstation Download & Setup
+### VMware Workstation Download & Setup
 Download Links
 [Download for Windows](https://www.vmware.com/go/getplayer-win)
 
@@ -73,12 +71,12 @@ Installation Guide
 Windows
 ```powershell
 # Run installer as Administrator
-VMware-player-16.x.x-xxxxxx.exe /s /v"/qn"
+VMware-player-16.x.x-xxxxxx.exe 
 ```
 - Minimum: 4 CPU cores, 8GB RAM, 50GB disk
 - Network: Bridged adapter recommended
 
-## **Virtual Machine Specifications**
+### **Virtual Machine Specifications**
 
 | Category               | Setting                  | Recommended Value              | Notes                                                                 |
 |------------------------|--------------------------|---------------------------------|-----------------------------------------------------------------------|
@@ -91,14 +89,11 @@ VMware-player-16.x.x-xxxxxx.exe /s /v"/qn"
 |                        | MAC Address              | Auto-generated                 | Change if cloning VMs                                                |
 
 
-## Software Requirements
-
-# Essential packages
+### Essential packages
 sudo apt update && sudo apt install -y \
 openjdk-8-jdk \
 python3-pip \
 mysql-server \
-maven \
 wget \
 ssh \
 
@@ -152,16 +147,6 @@ Check if Hadoop is installed and accessible:
 
 ```bash
 hadoop version
-```
-## Workflow
-
-```mermaid
-graph TD
-    A[Start Services] --> B[Configure Hadoop]
-    B --> C[Ingest Data to HDFS]
-    C --> D[Initialize Hive]
-    D --> E[Run Queries]
-    E --> F[Automate Pipeline]
 ```
 ## Basic Hadoop Configuration (Single Node Setup)
 The following XML files need to be updated to set up Hadoop in pseudo-distributed (single-node) mode:
@@ -232,6 +217,17 @@ Update it with:
   <value>/tmp/hive</value>
 </property>
 ```
+## Workflow
+
+```mermaid
+graph TD
+    A[Start Services] --> B[Configure Hadoop]
+    B --> C[Ingest Data to HDFS]
+    C --> D[Initialize Hive]
+    D --> E[Run Queries]
+    E --> F[Automate Pipeline]
+```
+
 ## Stage 1: Start Hadoop Services
 Starts the Hadoop Distributed File System (HDFS) daemons:
 * __NameNode__ (manages metadata and file system namespace)
@@ -249,8 +245,8 @@ You should see `NameNode` and `DataNode` running.
 ## start-yarn.sh
 Starts YARN (Yet Another Resource Negotiator) daemons:
 
-* ResourceManager (manages cluster resources)
-* NodeManager (manages containers on individual nodes)
+* __ResourceManager__ (manages cluster resources)
+* __NodeManager__ (manages containers on individual nodes)
 ```bash
 start-yarn.sh
 ```
@@ -511,7 +507,7 @@ main() {
 ## Sample Output (from Hive)
 After successful run:
 
-### 📋 Sample Output (First 5 Rows from Hive)
+### Sample Output (First 5 Rows from Hive)
 
 | SUMLEV | STATE | COUNTY | PLACE | COUSUB | CONCIT | PRIMGEO_FLAG | FUNCSTAT | NAME             | STNAME        |
 |--------|-------|--------|-------|--------|--------|---------------|----------|------------------|---------------|
