@@ -3,6 +3,52 @@
 ## Project Overview
 A complete pipeline to fetch census data, store in HDFS, and analyze using Hive with full automation capabilities.
 
+## Problem statement
+The goal of this project is to **fetch population data from a specified public dataset URL**, store it in **HDFS**, and create a corresponding **Hive table** to query and visualize the data.  
+The project emphasizes the complete flow from downloading structured data to **automated ingestion and validation** using a script.  
+
+Steps include:
+- Ensuring data availability and retrieval success.
+- Identifying file format and schema structure.
+- Storing the data in HDFS via CLI.
+- Creating Hive tables to reflect the dataset's schema.
+- Loading the data into Hive.
+- Validating the data using simple HiveQL queries.
+- (Optional) Automating the workflow for repeated or scheduled ingestion.
+
+## Approach
+
+1. **Verify Link Access**  
+   Check access to the dataset URL:  
+   `https://www2.census.gov/programs-surveys/popest/datasets/`
+
+2. **Understand the Dataset**  
+   Analyze whether it's structured (e.g., CSV), and determine columns/schema.
+
+3. **Data Retrieval**  
+   Use `wget` or `curl` to fetch the file from the source.
+
+4. **HDFS Storage**  
+   Store the file in HDFS using:  
+   `hadoop fs -put <file> <hdfs_path>`
+
+5. **Hive Table Creation**  
+   - Launch Hive CLI  
+   - Create a database (if not exists)  
+   - Define the table structure based on the CSV format  
+
+6. **Data Loading into Hive**  
+   Use:  
+   `LOAD DATA INPATH '<hdfs_path>' INTO TABLE <table_name>;`
+
+7. **Validation**  
+   Run:  
+   `SELECT * FROM <table_name> LIMIT 5;`  
+   to verify correctness of the loaded data.
+
+8. **Automation (Optional)**  
+   Automate the above workflow using a shell script for scheduled or repeat
+
 ## Technologies Used
 - Ubuntu 20.04 LTS
 - VMware Player 16
@@ -320,6 +366,180 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 - Redirects all script output to a log file with the same name as the script.
 
 ## System Resource Monitoring
-
+```bash
+monitor_resources() {
+    echo -e "\n--- SYSTEM RESOURCES $(date) ---"
+    free -h | awk 'NR==1 || NR==2'
+    df -h / | awk 'NR==1 || NR==2'
+    echo "--------------------------------"
+}
+```
 - Logs memory (free -h) and disk space (df -h /) before major steps.
 
+## Cleanup Handler
+```bash
+cleanup() {
+    echo -e "\n[Cleanup] Removing temporary files..."
+    hadoop fs -rm -f "$HDFS_PATH" >/dev/null 2>&1 || true
+    [ -f "$LOCAL_PATH" ] && rm -f "$LOCAL_PATH"
+    echo "[Cleanup] Complete"
+    exit 0
+}
+trap cleanup EXIT
+```
+## Hive DB Verification
+```bash
+# Verify/Create Hive Database
+verify_hive_db() {
+    echo -e "\n[Hive] Verifying database..."
+    if ! hive -e "USE $HIVE_DB" >/dev/null 2>&1; then
+        echo "[Hive] Creating database $HIVE_DB"
+        hive -e "CREATE DATABASE IF NOT EXISTS $HIVE_DB" || {
+            echo "[Hive] Failed to create database"
+            return 1
+        }
+    fi
+    echo "[Hive] Database verified"
+    return 0
+```
+- Checks if Hive database exists.
+- If not, it creates it using CREATE DATABASE.
+
+## Download Section
+```bashdownload_file() {
+    echo -e "\n[Download] Starting download..."
+    for ((i=1; i<=MAX_RETRIES; i++)); do
+        monitor_resources
+        if wget \
+            --timeout="$TIMEOUT_SEC" \
+            --tries=1 \
+            --header="User-Agent: Mozilla/5.0" \
+            --header="Accept: text/html" \
+            --referer="https://www.census.gov/" \
+            "$CSV_URL" -O "$LOCAL_PATH"; then
+            echo "[Download] Success: $LOCAL_PATH"
+            return 0
+        else
+            echo "[Download] Attempt $i failed, retrying..."
+            sleep 5
+        fi
+    done
+    echo "[Download] Failed after $MAX_RETRIES attempts"
+    return 1
+}
+```
+- Downloads the file using wget with retry and timeout logic.
+- Includes User-Agent and Referer headers to bypass potential access issues.
+
+## HDFS Operations
+```bash
+# HDFS Operations
+hdfs_operations() {
+    echo -e "\n[HDFS] Starting operations..."
+    monitor_resources
+    
+    if ! hadoop fs -ls / >/dev/null 2>&1; then
+        echo "[HDFS] HDFS not available"
+        return 1
+    fi
+
+    hadoop fs -mkdir -p "/user/project/dataset" || {
+        echo "[HDFS] Failed to create directory"
+        return 1
+    }
+
+    echo "[HDFS] Uploading to HDFS..."
+    hadoop fs -put -f "$LOCAL_PATH" "$HDFS_PATH" || {
+        echo "[HDFS] Upload failed"
+        return 1
+    }
+
+    echo "[HDFS] Upload successful"
+    return 0
+}
+```
+- Creates a destination folder in HDFS (if not exists).
+- Uploads the CSV file using hadoop fs -put -f.
+
+## Hive Table & Data Load
+```bash
+# Hive Operations
+hive_operations() {
+    echo -e "\n[Hive] Starting operations..."
+    monitor_resources
+
+    echo "[Hive] Creating table..."
+    hive -e "USE $HIVE_DB; CREATE TABLE IF NOT EXISTS $HIVE_TABLE (
+        SUMLEV STRING, STATE STRING, COUNTY STRING, 
+        PLACE STRING, COUSUB STRING, CONCIT STRING,
+        PRIMGEO_FLAG STRING, FUNCSTAT STRING, 
+        NAME STRING, STNAME STRING
+    ) ROW FORMAT DELIMITED
+    FIELDS TERMINATED BY ','
+    STORED AS TEXTFILE" || {
+        echo "[Hive] Table creation failed"
+        return 1
+    }
+
+    echo "[Hive] Loading data..."
+    hive -e "USE $HIVE_DB; LOAD DATA INPATH '$HDFS_PATH' INTO TABLE $HIVE_TABLE" || {
+        echo "[Hive] Data load failed"
+        return 1
+    }
+
+    echo "[Hive] Sample data:"
+    hive -e "USE $HIVE_DB; SELECT * FROM $HIVE_TABLE LIMIT 5;"
+}
+
+```
+- Creates a Hive table (if not exists).
+- Loads the uploaded CSV into the Hive table.
+- Outputs the first 5 records using SELECT * ... LIMIT 5.
+
+## Main Execution
+```bash
+main() {
+  verify_hive_db
+  download_file
+  hdfs_operations
+  hive_operations
+}
+```
+- Runs the pipeline in sequence.
+- Fails gracefully if any stage fails.
+
+## Sample Output (from Hive)
+After successful run:
+
+### 📋 Sample Output (First 5 Rows from Hive)
+
+| SUMLEV | STATE | COUNTY | PLACE | COUSUB | CONCIT | PRIMGEO_FLAG | FUNCSTAT | NAME             | STNAME        |
+|--------|-------|--------|-------|--------|--------|---------------|----------|------------------|---------------|
+| 162    | 44    | 000    | 51000 | 00000  | 00000  | 0             | A        | Providence city  | Rhode Island  |
+| 162    | 44    | 000    | 64000 | 00000  | 00000  | 0             | A        | Warwick city     | Rhode Island  |
+| 162    | 44    | 000    | 59000 | 00000  | 00000  | 0             | A        | Pawtucket city   | Rhode Island  |
+| 162    | 44    | 000    | 72000 | 00000  | 00000  | 0             | A        | Woonsocket city  | Rhode Island  |
+| 162    | 44    | 000    | 40000 | 00000  | 00000  | 0             | A        | Cranston city    | Rhode Island  |
+
+## Automating the Pipeline with Cron
+To ensure the data ingestion pipeline runs automatically every day at a specific time, we use **cron jobs**.
+```bash
+chmod +x load_population_data.sh
+./load_population_data.sh
+```
+## Schedule the Script (e.g., via cron):
+
+### Step 1: Open Crontab
+
+To edit the cron jobs for the current user, run:
+```bash
+crontab -e
+```
+This opens the crontab configuration file in your default text editor.
+
+### Step 2: Add the Cron Job
+```bash
+0 3 * * * /path/to/load_population_data.sh
+```
+- 0 3 * * *: This means every day at 3:00 AM.
+- `/path/to/load_population_data.sh`: This is the path to your data ingestion script.
