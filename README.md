@@ -329,7 +329,7 @@ It includes:
 ## Configuration Section
 ```bash
 FILE_NAME="sub-est2023_44.csv"
-CSV_URL="https://www2.census.gov/..."
+CSV_URL="https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/cities/totals/"
 LOCAL_PATH="/home/hdoop/$FILE_NAME"
 HDFS_PATH="/user/project/dataset/$FILE_NAME"
 HIVE_DB="project_data"
