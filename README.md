@@ -279,3 +279,47 @@ hive -e "CREATE TABLE census_data (...); SELECT COUNT(*) FROM census_data;"
 | **MySQL**       | `mysql -u hiveuser -p -e "USE metastore; SHOW TABLES;"` | Shows `TBLS`, `DBS` etc.                         |
 
 
+## Script: population_data_loader.sh
+This shell script automates the following:
+
+- Downloading US Census population data
+- Uploading it to HDFS
+- Creating a Hive table
+- Loading data into Hive
+- Displaying a sample output
+
+It includes:
+
+- Retry logic
+- System monitoring
+- Database existence checks
+- Logging
+- Graceful cleanup
+
+## Configuration Section
+```bash
+FILE_NAME="sub-est2023_44.csv"
+CSV_URL="https://www2.census.gov/..."
+LOCAL_PATH="/home/hdoop/$FILE_NAME"
+HDFS_PATH="/user/project/dataset/$FILE_NAME"
+HIVE_DB="project_data"
+HIVE_TABLE="population_data_2"
+```
+
+- FILE_NAME: Name of the file to download.
+- CSV_URL: Source URL of the dataset.
+- LOCAL_PATH: Local path to temporarily store the CSV.
+- HDFS_PATH: Destination path in HDFS.
+- HIVE_DB, HIVE_TABLE: Hive database and table used.
+
+ ## Logging
+ ```bash
+LOG_FILE="${0%.*}.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+```
+- Redirects all script output to a log file with the same name as the script.
+
+## System Resource Monitoring
+
+- Logs memory (free -h) and disk space (df -h /) before major steps.
+
