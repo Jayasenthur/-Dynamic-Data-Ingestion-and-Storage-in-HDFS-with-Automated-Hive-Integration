@@ -610,4 +610,17 @@ hdfs dfs -chmod -R 755 /user/project
 ```bash
 timeout 30s hive -e "QUERY"
 ```
+## Key Learnings from Dynamic Data Ingestion Project
 
+1. __Core Workflow__
+     - Designed end-to-end pipeline: Data fetch → HDFS → Hive → Validation.
+     - Automated ingestion using shell scripting (wget, HDFS/Hive CLI).
+
+2. __Technical Skills__
+     - Hadoop/Hive: Managed HDFS storage, Hive tables, and metastore.
+     - Bash Scripting: Built robust scripts with error handling, logging, and cleanup.
+     - Debugging: Analyzed logs (YARN, Hive, HDFS) to fix crashes/permissions.
+
+3. __Problem-Solving__
+     - Bypassed API blocks with custom HTTP headers.
+     - Resolved resource issues (Out Of Memory errors, port conflicts).
