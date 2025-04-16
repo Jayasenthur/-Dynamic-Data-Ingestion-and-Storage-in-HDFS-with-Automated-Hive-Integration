@@ -496,6 +496,11 @@ main() {
 - Runs the pipeline in sequence.
 - Fails gracefully if any stage fails.
 
+## To make the script executble and run
+```bash
+chmod +x load_population_data.sh
+./load_population_data.sh
+```
 ## Sample Output (from Hive)
 After successful run:
 
@@ -511,12 +516,6 @@ After successful run:
 
 ## Automating the Pipeline with Cron
 To ensure the data ingestion pipeline runs automatically every day at a specific time, we use **cron jobs**.
-```bash
-chmod +x load_population_data.sh
-./load_population_data.sh
-```
-## Schedule the Script (e.g., via cron):
-
 ### Step 1: Open Crontab
 
 To edit the cron jobs for the current user, run:
@@ -617,9 +616,9 @@ timeout 30s hive -e "QUERY"
      - Automated ingestion using shell scripting (wget, HDFS/Hive CLI).
 
 2. __Technical Skills__
-     - Hadoop/Hive: Managed HDFS storage, Hive tables, and metastore.
-     - Bash Scripting: Built robust scripts with error handling, logging, and cleanup.
-     - Debugging: Analyzed logs (YARN, Hive, HDFS) to fix crashes/permissions.
+     - **Hadoop/Hive**: Managed HDFS storage, Hive tables, and metastore.
+     - **Bash Scripting**: Built robust scripts with error handling, logging, and cleanup.
+     - **Debugging**: Analyzed logs (YARN, Hive, HDFS) to fix crashes/permissions.
 
 3. __Problem-Solving__
      - Bypassed API blocks with custom HTTP headers.
