@@ -3,15 +3,6 @@
 ## Problem statement
 The goal of this project is to **fetch population data from a specified public dataset URL**, store it in **HDFS**, and create a corresponding **Hive table** to query and visualize the data.The project emphasizes the complete flow from downloading structured data to **automated ingestion and validation** using a script.  
 
-Steps include:
-- Ensuring data availability and retrieval success.
-- Identifying file format and schema structure.
-- Storing the data in HDFS via CLI.
-- Creating Hive tables to reflect the dataset's schema.
-- Loading the data into Hive.
-- Validating the data using simple HiveQL queries.
-- (Optional) Automating the workflow for repeated or scheduled ingestion.
-
 ## Approach
 
 1. **Verify Link Access**  
@@ -46,13 +37,14 @@ Steps include:
    Automate the above workflow using a shell script for scheduled or repeat
 
 ## Technologies Used
-- Ubuntu 20.04 LTS
-- VMware Player 16
-- Hadoop 3.3.6
-- Hive 3.1.3
-- MySQL 8.0 (Metastore)
-- Python 3.8
-- Shell Scripting
+
+| Category         | Tools                                |
+|------------------|---------------------------------------|
+| Data Storage     | HDFS                                 |
+| Data Processing  | Hive                                 |
+| Automation       | Shell Scripting (`population_data_loader.sh`) |
+| Scheduling       | Cron                                 |
+| Infrastructure   | Hadoop 3.3.6, Hive 3.1.3, Ubuntu 20.04,MySQL 8.0 (Metastore),Python 3.8 |
 
 ## Installation Guide
 
@@ -67,15 +59,11 @@ wget https://releases.ubuntu.com/20.04/ubuntu-20.04.6-desktop-amd64.iso
 Download Links
 [Download for Windows](https://www.vmware.com/go/getplayer-win)
 
-Installation Guide
 Windows
 ```powershell
 # Run installer as Administrator
 VMware-player-16.x.x-xxxxxx.exe 
 ```
-- Minimum: 4 CPU cores, 8GB RAM, 50GB disk
-- Network: Bridged adapter recommended
-
 ### **Virtual Machine Specifications**
 
 | Category               | Setting                  | Recommended Value              | Notes                                                                 |
@@ -317,7 +305,7 @@ hive -e "CREATE TABLE census_data (...); SELECT COUNT(*) FROM census_data;"
 | **NameNode**    | `curl -s http://localhost:9870 \| grep namenode` | Contains `"namenode"` in HTML output             |
 | **YARN**        | `yarn node -list`                        | Lists active nodes with `RUNNING` status         |
 | **Hive Metastore** | `netstat -tulnp \| grep 9083`         | `tcp 0 0 0.0.0.0:9083 0.0.0.0:* LISTEN`          |
-| **HiveServer2** | `beeline -u jdbc:hive2://localhost:10000 -e "SHOW DATABASES;"` | Lists `census` database                          |
+| **HiveServer2** | `beeline -u jdbc:hive2://localhost:10000 -e "SHOW DATABASES;"` | Lists `project_data` database                          |
 | **MySQL**       | `mysql -u hiveuser -p -e "USE metastore; SHOW TABLES;"` | Shows `TBLS`, `DBS` etc.                         |
 
 
@@ -383,6 +371,10 @@ cleanup() {
 }
 trap cleanup EXIT
 ```
+- Ensures clean exit by removing temporary files (HDFS + local) when the script exits.
+- Automatically calls cleanup() on script exit (success/failure/interrupt).
+- Prevents cleanup failures from crashing the script
+  
 ## Hive DB Verification
 ```bash
 # Verify/Create Hive Database
@@ -541,8 +533,9 @@ This opens the crontab configuration file in your default text editor.
 - `/path/to/load_population_data.sh`: This is the path to your data ingestion script.
 
 ## 1. YARN ResourceManager Web UI
-URL: http://192.168.1.40:8088/cluster/nodes
-Purpose:
+URL: http://localhost:8088/cluster/nodes
+
+__Purpose__:
 - Monitors cluster resources and running applications
 - Shows live node status and resource utilization
 - Check memory usage per node in the UI
@@ -557,12 +550,11 @@ Purpose:
 | Scheduler         | Resource allocation queues             | Optimize job scheduling        |
 
 ## 2. HDFS NameNode Web UI
-URL: http://192.168.1.40:9870/dfshealth.html#tab-datanode
+URL: http://localhost/dfshealth.html#tab-datanode
+
 __Purpose:__
 - Monitors HDFS storage health and DataNode status
 - Provides filesystem browsing capabilities
-
-## Key Sections
 
 ##  Key Sections
 
