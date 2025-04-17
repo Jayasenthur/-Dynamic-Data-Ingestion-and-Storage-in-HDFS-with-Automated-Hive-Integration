@@ -62,7 +62,7 @@ Download Links
 Windows
 ```powershell
 # Run installer as Administrator
-VMware-player-16.x.x-xxxxxx.exe 
+VMware-player-17.x.x-xxxxxx.exe 
 ```
 ### **Virtual Machine Specifications**
 
@@ -71,7 +71,7 @@ VMware-player-16.x.x-xxxxxx.exe
 | **Hardware**           | vCPUs                    | 4 cores                        | Allocate ≥2 cores for Hadoop services                                 |
 |                        | RAM                      | 8 GB (Minimum)                 | 16 GB recommended for production                                     |
 |                        | Disk Space               | 50 GB (Thin Provisioned)       | SSD preferred for better I/O performance                             |
-| **Software**           | VMware Version           | Workstation 16.x / Player 16.x | [Download Link](https://www.vmware.com/go/getplayer-win)             |
+| **Software**           | VMware Version           | Workstation 17.x / Player 17.x | [Download Link](https://www.vmware.com/go/getplayer-win)             |
 |                        | Guest OS                 | Ubuntu 20.04 LTS               | Server/Desktop edition both supported                                |
 | **Network**            | Adapter Type             | Bridged                        | NAT may cause connection issues with cluster services                |
 |                        | MAC Address              | Auto-generated                 | Change if cloning VMs                                                |
@@ -80,7 +80,6 @@ VMware-player-16.x.x-xxxxxx.exe
 ### Essential packages
 sudo apt update && sudo apt install -y \
 openjdk-8-jdk \
-python3-pip \
 mysql-server \
 wget \
 ssh \
